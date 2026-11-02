@@ -12,6 +12,12 @@ Mohamed bin Zayed University of Artificial Intelligence (MBZUAI)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+<img src="assets/occtrack_demo.gif" width="640" alt="OccTrack demo" />
+
+<sub>OccTrack on a simulated crowd filmed by a panning, shaking camera. Grey boxes are raw
+detections (opacity = confidence); coloured boxes are confirmed tracks with ID and trail.
+Reproduce with <code>python tools/demo_gif.py</code>.</sub>
+
 </div>
 
 ---
@@ -152,7 +158,8 @@ occtrack/
 │   ├── detectors/       # YOLO wrapper, torchvision Re-ID embedder
 │   └── io.py            # MOTChallenge format
 ├── configs/             # default, MOT17, MOT20, DanceTrack, ByteTrack-like baseline
-├── tools/               # track_mot, eval_mot, track_video, simulate_ablation
+├── tools/               # track_mot, eval_mot, track_video, simulate_ablation, demo_gif
+├── assets/              # README demo media
 ├── scripts/             # TrackEval wrapper
 └── tests/               # unit tests (pytest)
 ```
