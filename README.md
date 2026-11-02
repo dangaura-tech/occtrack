@@ -61,6 +61,9 @@ pip install -e .                 # core tracker (numpy, scipy)
 pip install -e ".[video,reid]"   # + YOLO detector, OpenCV, torchvision Re-ID
 ```
 
+An editable install also provides the console commands `occtrack-mot`, `occtrack-eval`
+and `occtrack-ablation` (equivalent to the scripts in `tools/`).
+
 ## Quick start
 
 ```python
@@ -68,7 +71,7 @@ import numpy as np
 from occtrack import OccTracker, TrackerConfig
 
 tracker = OccTracker(TrackerConfig(track_buffer=30))
-for boxes_xyxy, scores in detections_per_frame:     # your detector output
+for boxes_xyxy, scores in detections_per_frame:  # your detector output
     for track in tracker.update(boxes_xyxy, scores):
         print(track.track_id, track.xyxy)
 ```

@@ -12,6 +12,11 @@ license = { text = "MIT" }
 authors = [{ name = "Dang Truong Minh Le", email = "dang.le@mbzuai.ac.ae" }]
 dependencies = ["numpy>=1.24", "scipy>=1.10", "PyYAML>=6.0"]
 
+[project.scripts]
+occtrack-mot = "occtrack.cli:track_mot"
+occtrack-eval = "occtrack.cli:eval_mot"
+occtrack-ablation = "occtrack.cli:simulate_ablation"
+
 [project.optional-dependencies]
 video = ["ultralytics>=8.1", "opencv-python>=4.8"]
 reid = ["torch>=2.1", "torchvision>=0.16"]
