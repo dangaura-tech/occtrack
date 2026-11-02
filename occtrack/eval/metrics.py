@@ -130,31 +130,36 @@ def evaluate_sequence(
     gt: Dict[int, np.ndarray], pred: Dict[int, np.ndarray], iou_thresh: float = 0.5
 ) -> Dict[str, float]:
     """Evaluate dicts ``{frame: array[K, >=5]}`` with columns ``id, x1, y1, x2, y2, ...``."""
+    from .hota import hota
+
     acc = MOTAccumulator(iou_thresh)
     empty = np.zeros((0, 5))
     for f in sorted(set(gt) | set(pred)):
         g = gt.get(f, empty)
         p = pred.get(f, empty)
         acc.update(g[:, 0], g[:, 1:5], p[:, 0], p[:, 1:5])
-    return acc.compute()
+    return {**acc.compute(), **hota(gt, pred)}
 
 
 def summarize(per_seq: Dict[str, Dict[str, float]]) -> Dict[str, float]:
-    """Combine per-sequence results: counts are summed, MOTA is recomputed, IDF1/MOTP/IDP/IDR are GT-weighted."""
+    """Combine per-sequence results: counts are summed, MOTA is recomputed, ratio metrics are GT-weighted."""
     keys_sum = ["IDSW", "Frag", "FP", "FN", "MT", "ML", "GT", "num_gt_ids"]
     total = {k: sum(r[k] for r in per_seq.values()) for k in keys_sum}
     total["MOTA"] = 1.0 - (total["FN"] + total["FP"] + total["IDSW"]) / max(total["GT"], 1)
     w = np.array([r["GT"] for r in per_seq.values()], dtype=float)
-    for k in ("IDF1", "MOTP", "IDP", "IDR"):
+    for k in ("IDF1", "MOTP", "IDP", "IDR", "HOTA", "DetA", "AssA", "LocA"):
         v = np.array([r[k] for r in per_seq.values()])
         total[k] = float((v * w).sum() / max(w.sum(), 1))
     return total
 
 
 def format_table(rows: Iterable[tuple]) -> str:
-    cols = ["MOTA", "IDF1", "MOTP", "IDSW", "FP", "FN", "MT", "ML"]
+    cols = ["HOTA", "DetA", "AssA", "MOTA", "IDF1", "IDSW", "FP", "FN"]
     lines = ["| Sequence | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
     for name, r in rows:
-        cells = [f"{r[c] * 100:.1f}" if c in ("MOTA", "IDF1", "MOTP") else str(int(r[c])) for c in cols]
+        cells = [
+            f"{r[c] * 100:.1f}" if c in ("HOTA", "DetA", "AssA", "MOTA", "IDF1", "MOTP") else str(int(r[c]))
+            for c in cols
+        ]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
