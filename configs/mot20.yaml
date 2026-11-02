@@ -1,0 +1,10 @@
+# MOT20: extremely crowded scenes -> longer occlusion buffer, stricter new-track threshold.
+tracker:
+  high_thresh: 0.5
+  new_track_thresh: 0.75
+  match_thresh: 0.7
+  track_buffer: 50
+  occlusion_buffer_gain: 1.5
+  occlusion_thresh: 0.25
+  min_box_area: 50.0
+  frame_rate: 25

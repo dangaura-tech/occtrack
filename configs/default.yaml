@@ -1,0 +1,16 @@
+tracker:
+  high_thresh: 0.6
+  low_thresh: 0.1
+  new_track_thresh: 0.7
+  match_thresh: 0.8
+  second_match_thresh: 0.5
+  tentative_match_thresh: 0.7
+  track_buffer: 30
+  occlusion_buffer_gain: 1.0
+  occlusion_thresh: 0.3
+  min_hits: 2
+  appearance_weight: 0.3
+  adaptive_noise: true
+  motion_gating: true
+  min_box_area: 10.0
+  frame_rate: 30

@@ -1,0 +1,7 @@
+# MOT17: moderate density, mixed static / moving cameras.
+tracker:
+  high_thresh: 0.6
+  new_track_thresh: 0.7
+  track_buffer: 30
+  occlusion_buffer_gain: 1.0
+  min_box_area: 100.0

@@ -1,0 +1,6 @@
+# Ablation baseline: disable every occlusion-aware component.
+tracker:
+  occlusion_buffer_gain: 0.0
+  adaptive_noise: false
+  motion_gating: false
+  appearance_weight: 0.0
