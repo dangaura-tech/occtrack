@@ -4,3 +4,7 @@ tracker:
   adaptive_noise: false
   motion_gating: false
   appearance_weight: 0.0
+  cmc: false
+  re_update: false
+  momentum_weight: 0.0
+  reid_stage: false

@@ -14,3 +14,12 @@ tracker:
   motion_gating: true
   min_box_area: 10.0
   frame_rate: 30
+  # v2 components
+  cmc: true
+  re_update: true
+  momentum_weight: 0.2
+  momentum_delta: 3
+  reid_stage: true
+  reid_thresh: 0.25
+  reid_spatial_sigma: 3.0
+  memory_size: 10

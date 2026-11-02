@@ -88,3 +88,24 @@ class KalmanFilter:
         d = zs - proj_mean
         sol = scipy.linalg.solve_triangular(chol, d.T, lower=True, check_finite=False)
         return np.sum(sol * sol, axis=0)
+
+
+def warp_state(mean: np.ndarray, cov: np.ndarray, warp: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Apply a 2x3 affine camera-motion warp to a (cx, cy, a, h, v...) Kalman state.
+
+    Positions are mapped by ``A x + t``; velocities by ``A``; the height (and its velocity)
+    is scaled by the isotropic scale ``sqrt(|det A|)``; the aspect ratio is unchanged.
+    The covariance is transformed consistently with the same linear map.
+    """
+    a = warp[:, :2]
+    t = warp[:, 2]
+    s = float(np.sqrt(abs(np.linalg.det(a))))
+    T = np.eye(8)
+    T[0:2, 0:2] = a
+    T[4:6, 4:6] = a
+    T[3, 3] = s
+    T[7, 7] = s
+    mean = T @ mean
+    mean[0:2] += t
+    cov = T @ cov @ T.T
+    return mean, cov

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "occtrack"
-version = "0.2.0"
+version = "0.3.0"
 description = "Occlusion-aware multi-object tracking by detection"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,8 +19,9 @@ occtrack-ablation = "occtrack.cli:simulate_ablation"
 
 [project.optional-dependencies]
 video = ["ultralytics>=8.1", "opencv-python>=4.8"]
+cmc = ["opencv-python-headless>=4.8"]
 reid = ["torch>=2.1", "torchvision>=0.16"]
-dev = ["pytest>=7", "ruff"]
+dev = ["pytest>=7", "ruff", "opencv-python-headless>=4.8"]
 
 [tool.setuptools.packages.find]
 include = ["occtrack*"]
