@@ -65,3 +65,40 @@ def gate_by_motion(
         d = t.kf.gating_distance(t.mean, t.cov, z, only_position)
         cost[i, d > thresh] = INF_COST
     return cost
+
+
+def direction_cost(tracks: Sequence[Track], boxes: np.ndarray, scores: np.ndarray, delta: int = 3) -> np.ndarray:
+    """Observation-centric momentum (OC-SORT): angular difference between each track's observed
+    direction of motion and the direction from its last observation to each detection,
+    normalised to [0, 1] and weighted by detection confidence."""
+    cost = np.zeros((len(tracks), len(boxes)))
+    if not len(tracks) or not len(boxes):
+        return cost
+    centres = np.c_[(boxes[:, 0] + boxes[:, 2]) / 2, (boxes[:, 1] + boxes[:, 3]) / 2]
+    for i, t in enumerate(tracks):
+        d_track = t.observed_direction(delta)
+        if d_track is None:
+            continue
+        v = centres - t.last_observation[:2]
+        n = np.linalg.norm(v, axis=1)
+        valid = n > 1e-6
+        cos = np.ones(len(boxes))
+        cos[valid] = (v[valid] @ d_track) / n[valid]
+        cost[i] = np.arccos(np.clip(cos, -1.0, 1.0)) / np.pi * scores
+    return cost
+
+
+def reid_cost(tracks: Sequence[Track], boxes: np.ndarray, feats: np.ndarray, spatial_sigma: float = 3.0) -> np.ndarray:
+    """Long-term re-identification cost: prototype-memory appearance distance, gated by a
+    spatial window that widens with the track's positional uncertainty."""
+    if not len(tracks) or not len(boxes):
+        return np.zeros((len(tracks), len(boxes)))
+    centres = np.c_[(boxes[:, 0] + boxes[:, 2]) / 2, (boxes[:, 1] + boxes[:, 3]) / 2]
+    cost = np.full((len(tracks), len(boxes)), INF_COST)
+    for i, t in enumerate(tracks):
+        dist = np.linalg.norm(centres - t.mean[:2], axis=1)
+        radius = spatial_sigma * t.position_std() + t.mean[3]
+        ok = dist <= radius
+        if ok.any():
+            cost[i, ok] = t.appearance_distance(feats[ok])
+    return cost
