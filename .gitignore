@@ -15,9 +15,9 @@ htmlcov/
 *.log
 .DS_Store
 
-data/
-results/
-third_party/
+/data/
+/results/
+/third_party/
 *.mp4
 *.avi
 *.pt
