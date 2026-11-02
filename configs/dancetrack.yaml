@@ -1,0 +1,9 @@
+# DanceTrack: uniform appearance and highly non-linear motion -> rely on observation-centric
+# momentum and re-updates, down-weight appearance.
+tracker:
+  high_thresh: 0.6
+  new_track_thresh: 0.7
+  momentum_weight: 0.3
+  appearance_weight: 0.1
+  track_buffer: 30
+  frame_rate: 20
