@@ -38,6 +38,7 @@ def main() -> None:
     p.add_argument("--weights", default="yolov8m.pt")
     p.add_argument("--config", default="configs/default.yaml")
     p.add_argument("--reid", action="store_true", help="use a torchvision appearance embedder")
+    p.add_argument("--no-cmc", action="store_true", help="disable camera motion compensation")
     p.add_argument("--device", default=None)
     p.add_argument("--show", action="store_true")
     args = p.parse_args()
@@ -57,6 +58,11 @@ def main() -> None:
 
         embedder = TorchvisionEmbedder(device=args.device or "cpu")
     tracker = OccTracker(load_tracker_config(args.config, frame_rate=int(round(fps))))
+    cmc = None
+    if not args.no_cmc:
+        from occtrack.cmc import SparseFlowCMC
+
+        cmc = SparseFlowCMC()
 
     trails: dict[int, list] = {}
     frame_idx = 0
@@ -67,7 +73,8 @@ def main() -> None:
         frame_idx += 1
         boxes, scores = detector(frame)
         feats = embedder(frame, boxes) if embedder is not None else None
-        for t in tracker.update(boxes, scores, feats):
+        warp = cmc.apply(frame, boxes[scores > 0.5]) if cmc is not None else None
+        for t in tracker.update(boxes, scores, feats, warp=warp):
             x1, y1, x2, y2 = t.xyxy.astype(int)
             c = color_for(t.track_id)
             cv2.rectangle(frame, (x1, y1), (x2, y2), c, 2)
