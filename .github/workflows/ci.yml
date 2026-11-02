@@ -21,4 +21,4 @@ jobs:
       - run: ruff check .
       - run: pytest -q
       - name: Synthetic ablation smoke run
-        run: python tools/simulate_ablation.py --scenes 1 --frames 100 --targets 10
+        run: python tools/simulate_ablation.py --scenes 1 --frames 100
