@@ -29,7 +29,7 @@ def interpolate_tracks(
         arr = np.array(sorted(rows))
         frames = arr[:, 0].astype(int)
         filled = [arr[0]]
-        for prev, cur in zip(arr[:-1], arr[1:], strict=True):
+        for prev, cur in zip(arr[:-1], arr[1:]):  # same length by construction (Python 3.9 has no strict=)
             gap = int(cur[0] - prev[0])
             if 1 < gap <= max_gap:
                 for k in range(1, gap):
