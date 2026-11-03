@@ -118,6 +118,13 @@ python tools/eval_mot.py --gt data/MOT17/train --pred results/mot17_train --filt
 bash scripts/run_trackeval.sh data/MOT17 results/mot17_train MOT17
 ```
 
+**Visualise results** (ID-coloured boxes, trails, optional dashed ground truth):
+
+```bash
+python tools/visualize.py --seq data/MOT17/train/MOT17-04-FRCNN \
+    --results results/mot17_train/MOT17-04-FRCNN.txt --out vis/MOT17-04.mp4 --gt --scale 0.5
+```
+
 ## Ablations on synthetic crowds
 
 `tools/simulate_ablation.py` generates three controlled scenarios: a static camera, a
@@ -150,6 +157,7 @@ occtrack/
 │   ├── track.py         # Track state, ORU, adaptive-noise updates, prototype memory
 │   ├── cmc.py           # camera motion compensation (sparse optical flow + RANSAC)
 │   ├── postprocess.py   # gap interpolation + temporal smoothing
+│   ├── visualize.py     # drawing tracks / trails / ground truth, video rendering
 │   ├── kalman.py        # constant-velocity Kalman filter (cx, cy, a, h) + affine warps
 │   ├── matching.py      # IoU / OCM / appearance / Re-ID costs, gating, Hungarian
 │   ├── boxes.py         # box formats, IoU, occlusion ratio
@@ -158,7 +166,7 @@ occtrack/
 │   ├── detectors/       # YOLO wrapper, torchvision Re-ID embedder
 │   └── io.py            # MOTChallenge format
 ├── configs/             # default, MOT17, MOT20, DanceTrack, ByteTrack-like baseline
-├── tools/               # track_mot, eval_mot, track_video, simulate_ablation, demo_gif
+├── tools/               # track_mot, eval_mot, track_video, visualize, simulate_ablation, demo_gif
 ├── assets/              # README demo media
 ├── scripts/             # TrackEval wrapper
 └── tests/               # unit tests (pytest)
