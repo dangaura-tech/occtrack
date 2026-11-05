@@ -118,6 +118,12 @@ python tools/eval_mot.py --gt data/MOT17/train --pred results/mot17_train --filt
 bash scripts/run_trackeval.sh data/MOT17 results/mot17_train MOT17
 ```
 
+**Tracker throughput** (association + filtering only, on simulated crowds of increasing density):
+
+```bash
+python tools/benchmark_fps.py --targets 10 25 50 100 --frames 300 --features
+```
+
 **Visualise results** (ID-coloured boxes, trails, optional dashed ground truth):
 
 ```bash
@@ -166,7 +172,7 @@ occtrack/
 │   ├── detectors/       # YOLO wrapper, torchvision Re-ID embedder
 │   └── io.py            # MOTChallenge format
 ├── configs/             # default, MOT17, MOT20, DanceTrack, ByteTrack-like baseline
-├── tools/               # track_mot, eval_mot, track_video, visualize, simulate_ablation, demo_gif
+├── tools/               # track_mot, eval_mot, track_video, visualize, benchmark_fps, simulate_ablation, demo_gif
 ├── assets/              # README demo media
 ├── scripts/             # TrackEval wrapper
 └── tests/               # unit tests (pytest)
