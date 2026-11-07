@@ -5,6 +5,9 @@ Requires: pip install ultralytics opencv-python (and torch/torchvision for --rei
 
 Example:
     python tools/track_video.py --source street.mp4 --output street_tracked.mp4 --weights yolov8m.pt
+
+    # open-vocabulary: track anything named in the prompt (OWLv2, pip install -e ".[openvocab]")
+    python tools/track_video.py --source street.mp4 --prompt "person, bicycle, dog"
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from occtrack import OccTracker  # noqa: E402
 from occtrack.config import load_tracker_config  # noqa: E402
 from occtrack.detectors.yolo import YOLODetector  # noqa: E402
+from occtrack.multiclass import MultiClassTracker  # noqa: E402
 
 
 def color_for(track_id: int) -> tuple[int, int, int]:
@@ -36,6 +40,9 @@ def main() -> None:
     p.add_argument("--source", required=True, help="video path or webcam index")
     p.add_argument("--output", default="tracked.mp4")
     p.add_argument("--weights", default="yolov8m.pt")
+    p.add_argument("--prompt", default=None, help="comma-separated text queries for open-vocabulary tracking")
+    p.add_argument("--ov-model", default="google/owlv2-base-patch16-ensemble")
+    p.add_argument("--ov-threshold", type=float, default=0.1)
     p.add_argument("--config", default="configs/default.yaml")
     p.add_argument("--reid", action="store_true", help="use a torchvision appearance embedder")
     p.add_argument("--no-cmc", action="store_true", help="disable camera motion compensation")
@@ -51,13 +58,21 @@ def main() -> None:
     w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     writer = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
 
-    detector = YOLODetector(args.weights, device=args.device)
+    names = None
+    if args.prompt:
+        from occtrack.detectors.open_vocab import OpenVocabDetector
+
+        names = [q.strip() for q in args.prompt.split(",") if q.strip()]
+        detector = OpenVocabDetector(names, args.ov_model, args.ov_threshold, device=args.device)
+    else:
+        detector = YOLODetector(args.weights, device=args.device)
     embedder = None
     if args.reid:
         from occtrack.detectors.reid import TorchvisionEmbedder
 
         embedder = TorchvisionEmbedder(device=args.device or "cpu")
-    tracker = OccTracker(load_tracker_config(args.config, frame_rate=int(round(fps))))
+    tracker_cfg = load_tracker_config(args.config, frame_rate=int(round(fps)))
+    tracker = MultiClassTracker(tracker_cfg) if names else OccTracker(tracker_cfg)
     cmc = None
     if not args.no_cmc:
         from occtrack.cmc import SparseFlowCMC
@@ -71,14 +86,21 @@ def main() -> None:
         if not ok:
             break
         frame_idx += 1
-        boxes, scores = detector(frame)
+        if names:
+            boxes, scores, labels = detector.detect(frame)
+        else:
+            boxes, scores = detector(frame)
         feats = embedder(frame, boxes) if embedder is not None else None
         warp = cmc.apply(frame, boxes[scores > 0.5]) if cmc is not None else None
-        for t in tracker.update(boxes, scores, feats, warp=warp):
+        tracks = tracker.update(boxes, scores, labels, feats, warp=warp) if names else tracker.update(
+            boxes, scores, feats, warp=warp
+        )
+        for t in tracks:
             x1, y1, x2, y2 = t.xyxy.astype(int)
             c = color_for(t.track_id)
+            tag = f"#{t.track_id} {names[t.label]}" if names else f"#{t.track_id}"
             cv2.rectangle(frame, (x1, y1), (x2, y2), c, 2)
-            cv2.putText(frame, f"#{t.track_id}", (x1, max(y1 - 6, 12)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, c, 2)
+            cv2.putText(frame, tag, (x1, max(y1 - 6, 12)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, c, 2)
             trail = trails.setdefault(t.track_id, [])
             trail.append(((x1 + x2) // 2, y2))
             del trail[:-40]
@@ -86,7 +108,7 @@ def main() -> None:
                 cv2.polylines(frame, [np.array(trail, np.int32)], False, c, 2)
         cv2.putText(
             frame,
-            f"frame {frame_idx}  tracks {len(tracker.tracks)}",
+            f"frame {frame_idx}  tracks {len(tracks)}",
             (10, 28),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,

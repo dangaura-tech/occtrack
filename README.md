@@ -101,6 +101,34 @@ for frame, (boxes_xyxy, scores, feats) in zip(frames, detections):
 python tools/track_video.py --source street.mp4 --output street_tracked.mp4 --weights yolov8m.pt --reid
 ```
 
+### Open-vocabulary tracking: track what you describe
+
+With `--prompt`, detections come from **OWLv2**, an open-vocabulary detector that scores
+every image patch against CLIP text embeddings. The categories are whatever you type, not a
+fixed training label set:
+
+```bash
+pip install -e ".[openvocab]"   # torch + transformers; weights are fetched from the HF hub on first use
+python tools/track_video.py --source street.mp4 --prompt "person, bicycle, a dog on a leash"
+```
+
+Detections are decoded in `occtrack/detectors/open_vocab.py`: sigmoid scores maximised over
+the queries, boxes mapped back from OWLv2's padded-square input, and per-class NMS. Each
+category then goes to its own tracker through `MultiClassTracker`, so overlapping objects of
+different classes (a cyclist and the bicycle) can never swap identities. IDs stay unique
+across classes.
+
+```python
+from occtrack.detectors.open_vocab import OpenVocabDetector
+from occtrack.multiclass import MultiClassTracker
+
+detector, tracker = OpenVocabDetector(["person", "bicycle"]), MultiClassTracker()
+for frame in frames:
+    boxes, scores, labels = detector.detect(frame)
+    for t in tracker.update(boxes, scores, labels):
+        print(t.track_id, detector.prompts[t.label], t.xyxy)
+```
+
 ## MOTChallenge benchmarks
 
 Download [MOT17](https://motchallenge.net/data/MOT17/) / [MOT20](https://motchallenge.net/data/MOT20/)
@@ -160,6 +188,7 @@ python tools/simulate_ablation.py --scenes 5 --frames 300
 occtrack/
 ├── occtrack/
 │   ├── tracker.py       # OccTracker: 4-stage association + lifecycle management
+│   ├── multiclass.py    # class-aware tracking with globally unique IDs
 │   ├── track.py         # Track state, ORU, adaptive-noise updates, prototype memory
 │   ├── cmc.py           # camera motion compensation (sparse optical flow + RANSAC)
 │   ├── postprocess.py   # gap interpolation + temporal smoothing
@@ -169,7 +198,7 @@ occtrack/
 │   ├── boxes.py         # box formats, IoU, occlusion ratio
 │   ├── simulation.py    # synthetic crowds: occlusion, camera motion, Re-ID embeddings
 │   ├── eval/            # HOTA, CLEAR-MOT, IDF1
-│   ├── detectors/       # YOLO wrapper, torchvision Re-ID embedder
+│   ├── detectors/       # YOLO, open-vocabulary OWLv2, torchvision Re-ID embedder
 │   └── io.py            # MOTChallenge format
 ├── configs/             # default, MOT17, MOT20, DanceTrack, ByteTrack-like baseline
 ├── tools/               # track_mot, eval_mot, track_video, visualize, benchmark_fps, simulate_ablation, demo_gif
@@ -194,7 +223,8 @@ occtrack/
 OccTrack builds on SORT (Bewley et al., 2016), DeepSORT (Wojke et al., 2017),
 ByteTrack (Zhang et al., 2022), OC-SORT (Cao et al., 2023), BoT-SORT (Aharon et al., 2022)
 and GSI interpolation (Du et al., 2022). HOTA follows Luiten et al. (IJCV 2021) and the
-TrackEval reference implementation.
+TrackEval reference implementation. Open-vocabulary detection uses OWL-ViT / OWLv2
+(Minderer et al., ECCV 2022 / NeurIPS 2023).
 
 ## License
 
