@@ -21,6 +21,7 @@ occtrack-ablation = "occtrack.cli:simulate_ablation"
 video = ["ultralytics>=8.1", "opencv-python>=4.8"]
 cmc = ["opencv-python-headless>=4.8"]
 reid = ["torch>=2.1", "torchvision>=0.16"]
+openvocab = ["torch>=2.1", "transformers>=4.40", "opencv-python>=4.8"]
 dev = ["pytest>=7", "ruff", "opencv-python-headless>=4.8"]
 
 [tool.setuptools.packages.find]
